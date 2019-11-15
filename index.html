@@ -65,7 +65,7 @@
 }
 .メーター{
 	flex-grow:1;
-	height:50%;
+	height:2rem;
 }
 .ビュー{
 	flex-grow:1;
@@ -127,7 +127,7 @@ var wait=true;
 
 function calc_delta(){
 	delta["体力"]=0;delta["満腹"]=0;delta["便意"]=0;delta["眠気"]=0;delta["身体"]=0;delta["部屋"]=0;delta["薬"]=0;
-	
+
 	if(list["病気"]){
 		delta["体力"]=delta["体力"]-30*speed;
 	}
@@ -221,7 +221,7 @@ function check(time){
 	if(list["状態"]=="睡眠"&&list["眠気"]<=0){
 		list["状態"]="覚醒";
 	}
-	
+
 	if(list["身体"]>=100&&list["薬"]<=0){
 		list["病気"]=true;
 	}
@@ -247,7 +247,7 @@ function check(time){
 	}else{
 		next=tmp_next
 	}
-		
+
 }
 
 function save(){
