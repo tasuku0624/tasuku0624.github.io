@@ -84,7 +84,7 @@
 	justify-content:center;
 }
 .ボタン{
-	appearance: none;
+	-webkit-appearance:none;
 	border-radius:0;
 	flex-grow:1;
 	font-size:8%;
@@ -127,7 +127,8 @@ var delta={"体力":0,"満腹":0,"便意":0,"眠気":0,"身体":0,"部屋":0,"�
 var loop_time=125;
 var loop_timer;
 var next;
-var wait=true;
+var wait=false;
+var checking=false;
 
 function calc_delta(){
 	delta["体力"]=0;delta["満腹"]=0;delta["便意"]=0;delta["眠気"]=0;delta["身体"]=0;delta["部屋"]=0;delta["薬"]=0;
@@ -198,6 +199,7 @@ function check(time){
 	if(!time||time>now){
 		time=now;
 	}
+
 	var elapsed=(time-list["最終"])/3600000 ;
 	list["最終"]=time;
 	list["体力"]=list["体力"]+delta["体力"]*elapsed;
@@ -250,6 +252,7 @@ function check(time){
 		check(tmp_next);
 	}else{
 		next=tmp_next
+		checking=false;
 	}
 
 }
@@ -267,6 +270,7 @@ window.onload=function(){
 	var data=localStorage.getItem("list");
 	if(data){
 		list=JSON.parse(localStorage.getItem("list"));
+		checking=true;
 		check(calc_next());
 	}else{
 		list={
@@ -286,12 +290,13 @@ window.onload=function(){
 		next=list["誕生"];
 	}
 	save();
-	loop_timer=setInterval(loop, loop_time);
+	loop_start();
 }
 
 var loop=function(){
 	var now=Date.now();
-	if(next<now){
+	if(!checking&&next<now){
+		checking=true;
 		check(next);
 		save();
 	}
@@ -363,17 +368,23 @@ var loop=function(){
 };
 
 var loop_start=function(){
-	wait=true;
-	loop_timer=setInterval(loop, loop_time);
+	if(checking){
+		setTimeout(loop_start,loop_time);
+	}else{
+		wait=false;
+		loop_timer=setInterval(loop,loop_time);
+	}
+
 };
 
 document.getElementById("ごはん").onclick=function() {
-	if(wait&&list["状態"]=="覚醒"){
-		wait=false;
+	if(!wait&&list["状態"]=="覚醒"){
+		wait=true;
 		clearInterval(loop_timer);
 		document.getElementById("キャラ").innerHTML="😋";
 		list["満腹"]=100;
 		delta["満腹"]=0;
+		checking=true;
 		check(false);
 		save();
 		setTimeout(loop_start,2000);
@@ -381,12 +392,13 @@ document.getElementById("ごはん").onclick=function() {
 }
 
 document.getElementById("トイレ").onclick=function() {
-	if(wait&&list["状態"]=="覚醒"){
-		wait=false;
+	if(!wait&&list["状態"]=="覚醒"){
+		wait=true;
 		clearInterval(loop_timer);
 		document.getElementById("キャラ").innerHTML="🚻";
 		list["便意"]=0;
 		delta["便意"]=0;
+		checking=true;
 		check(false);
 		save();
 		setTimeout(loop_start,2000);
@@ -394,12 +406,13 @@ document.getElementById("トイレ").onclick=function() {
 }
 
 document.getElementById("風呂").onclick=function() {
-	if(wait&&list["状態"]=="覚醒"){
-		wait=false;
+	if(!wait&&list["状態"]=="覚醒"){
+		wait=true;
 		clearInterval(loop_timer);
 		document.getElementById("キャラ").innerHTML="🛁";
 		list["身体"]=0;
 		delta["身体"]=0;
+		checking=true;
 		check(false);
 		save();
 		setTimeout(loop_start,2000);
@@ -407,12 +420,13 @@ document.getElementById("風呂").onclick=function() {
 }
 
 document.getElementById("掃除").onclick=function() {
-	if(wait&&list["状態"]=="覚醒"){
-		wait=false;
+	if(!wait&&list["状態"]=="覚醒"){
+		wait=true;
 		clearInterval(loop_timer);
 		document.getElementById("キャラ").innerHTML="😊";
 		list["部屋"]=0;
 		delta["部屋"]=0;
+		checking=true;
 		check(false);
 		save();
 		setTimeout(loop_start,2000);
@@ -420,8 +434,8 @@ document.getElementById("掃除").onclick=function() {
 }
 
 document.getElementById("注射").onclick=function() {
-	if(wait&&list["状態"]=="覚醒"){
-		wait=false;
+	if(!wait&&list["状態"]=="覚醒"){
+		wait=true;
 		clearInterval(loop_timer);
 		document.getElementById("キャラ").innerHTML="😣";
 		list["薬"]=100;
@@ -432,6 +446,7 @@ document.getElementById("注射").onclick=function() {
 			list["体力"]=0;
 			delta["体力"]=0;
 		}
+		checking=true;
 		check(false);
 		save();
 		setTimeout(loop_start,2000);
@@ -439,10 +454,14 @@ document.getElementById("注射").onclick=function() {
 }
 
 document.getElementById("電気").onclick=function() {
-	if(list["状態"]!="死亡"){
+	if(!wait&&list["状態"]!="死亡"){
+		wait=true;
+		clearInterval(loop_timer);
 		list["電気"]=!list["電気"];
+		checking=true;
 		check(false);
 		save();
+		setTimeout(loop_start,loop_time);
 	}
 }
 </script>
