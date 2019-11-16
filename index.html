@@ -84,10 +84,13 @@
 	justify-content:center;
 }
 .ボタン{
-	-webkit-appearance:none;
-	border-radius:0;
+	background-color:#FFF;
+	border:1px solid #000;
 	flex-grow:1;
 	font-size:8%;
+	display:flex;
+	align-items:center;
+	justify-content:center;
 }
 -->
 </style>
@@ -108,12 +111,12 @@
 <div class="スプライト" id="キャラ"></div>
 </div>
 <div class="ツール">
-<button class="ボタン" id="ごはん" type="button">🍙</button>
-<button class="ボタン" id="トイレ" type="button">🚽</button>
-<button class="ボタン" id="風呂" type="button">🚿</button>
-<button class="ボタン" id="掃除" type="button">🧹</button>
-<button class="ボタン" id="注射" type="button">💉</button>
-<button class="ボタン" id="電気" type="button">💡</button>
+<div class="ボタン" id="ごはん">🍙</div>
+<div class="ボタン" id="トイレ">🚽</div>
+<div class="ボタン" id="風呂">🚿</div>
+<div class="ボタン" id="掃除">🧹</div>
+<div class="ボタン" id="注射">💉</div>
+<div class="ボタン" id="電気">💡</div>
 </div>
 </body>
 <script type="text/javascript">
