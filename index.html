@@ -134,6 +134,7 @@ var wait=false;
 var checking=false;
 
 function calc_delta(){
+	console.log("増減値を算出");
 	delta["体力"]=0;delta["満腹"]=0;delta["便意"]=0;delta["眠気"]=0;delta["身体"]=0;delta["部屋"]=0;delta["薬"]=0;
 
 	if(list["病気"]){
@@ -175,31 +176,34 @@ function calc_delta(){
 }
 
 function calc_next(){
+	console.log("次の時間を算出");
 	var tmp_next=Date.now()+24*60*60*1000;
 	calc_delta();
-	if(list["状態"]=="たまご"){tmp_next=list["誕生"];}
-	if(delta["便意"]>0&&list["便意"]<100){tmp_next=Math.min(tmp_next,3600000*(100-list["便意"])/delta["便意"]+list["最終"]);}
-	if(delta["身体"]>0&&list["身体"]<100){tmp_next=Math.min(tmp_next,3600000*(100-list["身体"])/delta["身体"]+list["最終"]);}
-	if(delta["眠気"]>0&&list["眠気"]<100){tmp_next=Math.min(tmp_next,3600000*(100-list["眠気"])/delta["眠気"]+list["最終"]);}
-	if(delta["眠気"]<0&&list["眠気"]>0){tmp_next=Math.min(tmp_next,3600000*(0-list["眠気"])/delta["眠気"]+list["最終"]);}
-	if(delta["体力"]<0&&list["体力"]>0){tmp_next=Math.min(tmp_next,3600000*(0-list["体力"])/delta["体力"]+list["最終"]);}
-	if(delta["満腹"]<0&&list["満腹"]>0){tmp_next=Math.min(tmp_next,3600000*(0-list["満腹"])/delta["満腹"]+list["最終"]);}
+	if(list["状態"]=="たまご"){tmp_next=list["誕生"]+1;}
+	if(delta["便意"]>0&&list["便意"]<100){tmp_next=Math.min(tmp_next,3600000*(100-list["便意"])/delta["便意"]+list["最終"]+1);}
+	if(delta["身体"]>0&&list["身体"]<100){tmp_next=Math.min(tmp_next,3600000*(100-list["身体"])/delta["身体"]+list["最終"]+1);}
+	if(delta["眠気"]>0&&list["眠気"]<100){tmp_next=Math.min(tmp_next,3600000*(100-list["眠気"])/delta["眠気"]+list["最終"]+1);}
+	if(delta["眠気"]<0&&list["眠気"]>0){tmp_next=Math.min(tmp_next,3600000*(0-list["眠気"])/delta["眠気"]+list["最終"]+1);}
+	if(delta["体力"]<0&&list["体力"]>0){tmp_next=Math.min(tmp_next,3600000*(0-list["体力"])/delta["体力"]+list["最終"]+1);}
+	if(delta["満腹"]<0&&list["満腹"]>0){tmp_next=Math.min(tmp_next,3600000*(0-list["満腹"])/delta["満腹"]+list["最終"]+1);}
 	if(delta["部屋"]>0){
 		if(list["部屋"]<50){
-			tmp_next=Math.min(tmp_next,3600000*(50-list["部屋"])/delta["部屋"]+list["最終"]);
+			tmp_next=Math.min(tmp_next,3600000*(50-list["部屋"])/delta["部屋"]+list["最終"]+1);
 		}else if(list["部屋"]<75){
-			tmp_next=Math.min(tmp_next,3600000*(75-list["部屋"])/delta["部屋"]+list["最終"]);
+			tmp_next=Math.min(tmp_next,3600000*(75-list["部屋"])/delta["部屋"]+list["最終"]+1);
 		}else if(list["部屋"]<100){
-			tmp_next=Math.min(tmp_next,3600000*(100-list["部屋"])/delta["部屋"]+list["最終"]);
+			tmp_next=Math.min(tmp_next,3600000*(100-list["部屋"])/delta["部屋"]+list["最終"]+1);
 		}
 	}
 	if(delta["薬"]<0&&list["薬"]>0){tmp_next=Math.min(tmp_next,3600000*(0-list["薬"])/delta["薬"]+list["最終"]);}
+	console.log(tmp_next);
 	return tmp_next;
 }
 
 function check(time){
+	console.log("チェック");
 	var now=Date.now();
-	if(!time||time>now){
+	if(!time){
 		time=now;
 	}
 
@@ -249,11 +253,14 @@ function check(time){
 	for (var i=0;i<key.length;i++){
 		if(list[key[i]]<0){list[key[i]]=0;}else if(list[key[i]]>100){list[key[i]]=100;}
 	}
+  console.log(list);
 
 	var tmp_next=calc_next();
 	if(tmp_next<now){
+    console.log("再チェック");
 		check(tmp_next);
 	}else{
+    console.log("チェック完了");
 		next=tmp_next
 		checking=false;
 	}
@@ -272,10 +279,12 @@ window.onload=function(){
 	var now=Date.now();
 	var data=localStorage.getItem("list");
 	if(data){
+    console.log("チェック開始");
 		list=JSON.parse(localStorage.getItem("list"));
 		checking=true;
 		check(calc_next());
 	}else{
+    console.log("初期化");
 		list={
 			"誕生":now+hatch,
 			"最終":now,
@@ -293,7 +302,7 @@ window.onload=function(){
 		next=list["誕生"];
 	}
 	save();
-	loop_start();
+	setTimeout(loop_start,loop_time);
 }
 
 var loop=function(){
@@ -372,12 +381,13 @@ var loop=function(){
 
 var loop_start=function(){
 	if(checking){
+    console.log("描写待ち");
 		setTimeout(loop_start,loop_time);
 	}else{
+    console.log("描写開始");
 		wait=false;
 		loop_timer=setInterval(loop,loop_time);
 	}
-
 };
 
 document.getElementById("ごはん").onclick=function() {
