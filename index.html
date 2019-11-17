@@ -107,8 +107,7 @@
 <div class="項目">身体:<meter class="メーター" id="身体" value="0" min="0" max="100" optimum="0" low="50" high="75"></meter></div>
 <div class="項目">部屋:<meter class="メーター" id="部屋" value="0" min="0" max="100" optimum="0" low="50" high="75"></meter></div>
 </div>
-<div class="ビュー">
-<div class="スプライト" id="キャラ"></div>
+<div class="ビュー" id="ビュー">
 </div>
 <div class="ツール">
 <div class="ボタン" id="ごはん">🍙</div>
@@ -231,6 +230,7 @@ function check(time){
 		list["便意"]=0;
 		list["身体"]=list["身体"]+50;
 		list["部屋"]=list["部屋"]+50;
+		list["うんこ"].push([Math.floor(Math.random()*80)+10,Math.floor(Math.random()*80)+10]);
 	}
 
 	if(list["状態"]=="睡眠"&&list["眠気"]<=0){
@@ -286,6 +286,8 @@ window.onload=function(){
 	if(data){
 		console.log("ロード");
 		list=JSON.parse(localStorage.getItem("list"));
+		if (!list["ゴミ"]){list["ゴミ"]=[];}
+		if (!list["うんこ"]){list["うんこ"]=[];}
 		console.log(list);
 		console.log("チェック開始");
 		check(calc_next());
@@ -303,7 +305,9 @@ window.onload=function(){
 			"眠気":0,
 			"身体":0,
 			"部屋":0,
-			"薬":0
+			"薬":0,
+			"ゴミ":[],
+			"うんこ":[]
 		};
 		next=calc_next();
 		save();
@@ -344,6 +348,16 @@ var loop=function(){
 		document.body.style.color="#FFF";
 	}
 
+	document.getElementById("ビュー").innerHTML="";
+
+	for (var i=0;i<list["うんこ"].length;i++){
+		document.getElementById("ビュー").insertAdjacentHTML("beforeend","<div class=\"スプライト\" id=\"うんこ"+i+"\">💩</div>");
+		document.getElementById("うんこ"+i).style.fontSize="10%";
+		document.getElementById("うんこ"+i).style.left=list["うんこ"][i][0]+"%";
+		document.getElementById("うんこ"+i).style.top=list["うんこ"][i][1]+"%";
+	}
+
+	document.getElementById("ビュー").insertAdjacentHTML("beforeend","<div class=\"スプライト\" id=\"キャラ\"></div>");
 	if(list["状態"]=="たまご"){
 		document.getElementById("キャラ").innerHTML="🥚";
 	}else if(list["状態"]=="死亡"){
@@ -435,6 +449,12 @@ document.getElementById("掃除").onclick=function() {
 		wait=true;
 		clearInterval(loop_timer);
 		document.getElementById("キャラ").innerHTML="😊";
+
+		var str = document.getElementById("ビュー").innerHTML;
+		str = str.replace(/💩/g,"✨");
+		document.getElementById("ビュー").innerHTML=str;
+
+		list["うんこ"]=[];
 		list["部屋"]=0;
 		delta["部屋"]=0;
 		check(false);
