@@ -124,14 +124,14 @@
 //localStorage.clear();
 var speed=1;
 var hatch=60000;
+var loop_time=125;
 
 var list;
-var delta={"体力":0,"満腹":0,"便意":0,"眠気":0,"身体":0,"部屋":0,"薬":0};
-var loop_time=125;
-var loop_timer;
+var delta={};
 var next;
 var wait=false;
 var checking=false;
+var loop_timer;
 
 function calc_delta(){
 	console.log("増減値を算出");
@@ -173,12 +173,13 @@ function calc_delta(){
 		}
 	}
 	delta["薬"]=-120*speed;
+	console.log(delta);
 }
 
 function calc_next(){
+	calc_delta();
 	console.log("次の時間を算出");
 	var tmp_next=Date.now()+24*60*60*1000;
-	calc_delta();
 	if(list["状態"]=="たまご"){tmp_next=list["誕生"]+1;}
 	if(delta["便意"]>0&&list["便意"]<100){tmp_next=Math.min(tmp_next,3600000*(100-list["便意"])/delta["便意"]+list["最終"]+1);}
 	if(delta["身体"]>0&&list["身体"]<100){tmp_next=Math.min(tmp_next,3600000*(100-list["身体"])/delta["身体"]+list["最終"]+1);}
@@ -195,15 +196,16 @@ function calc_next(){
 			tmp_next=Math.min(tmp_next,3600000*(100-list["部屋"])/delta["部屋"]+list["最終"]+1);
 		}
 	}
-	if(delta["薬"]<0&&list["薬"]>0){tmp_next=Math.min(tmp_next,3600000*(0-list["薬"])/delta["薬"]+list["最終"]);}
+	if(delta["薬"]<0&&list["薬"]>0){tmp_next=Math.min(tmp_next,3600000*(0-list["薬"])/delta["薬"]+list["最終"]+1);}
 	console.log(tmp_next);
 	return tmp_next;
 }
 
 function check(time){
 	console.log("チェック");
+	checking=true;
 	var now=Date.now();
-	if(!time){
+	if(!time||time>now){
 		time=now;
 	}
 
@@ -253,16 +255,17 @@ function check(time){
 	for (var i=0;i<key.length;i++){
 		if(list[key[i]]<0){list[key[i]]=0;}else if(list[key[i]]>100){list[key[i]]=100;}
 	}
-  console.log(list);
+	console.log(list);
 
 	var tmp_next=calc_next();
 	if(tmp_next<now){
-    console.log("再チェック");
+		console.log("再チェック");
 		check(tmp_next);
 	}else{
-    console.log("チェック完了");
+		console.log("チェック完了");
 		next=tmp_next
 		checking=false;
+		save();
 	}
 
 }
@@ -270,8 +273,10 @@ function check(time){
 function save(){
 	if(list["状態"]=="死亡"){
 		localStorage.clear();
+		console.log("クリア");
 	}else{
 		localStorage.setItem("list",JSON.stringify(list));
+		console.log("セーブ");
 	}
 }
 
@@ -279,12 +284,13 @@ window.onload=function(){
 	var now=Date.now();
 	var data=localStorage.getItem("list");
 	if(data){
-    console.log("チェック開始");
+		console.log("ロード");
 		list=JSON.parse(localStorage.getItem("list"));
-		checking=true;
+		console.log(list);
+		console.log("チェック開始");
 		check(calc_next());
 	}else{
-    console.log("初期化");
+		console.log("初期化");
 		list={
 			"誕生":now+hatch,
 			"最終":now,
@@ -299,18 +305,16 @@ window.onload=function(){
 			"部屋":0,
 			"薬":0
 		};
-		next=list["誕生"];
+		next=calc_next();
+		save();
 	}
-	save();
 	setTimeout(loop_start,loop_time);
 }
 
 var loop=function(){
 	var now=Date.now();
 	if(!checking&&next<now){
-		checking=true;
 		check(next);
-		save();
 	}
 	var elapsed=(now-list["最終"])/3600000 ;
 
@@ -381,10 +385,10 @@ var loop=function(){
 
 var loop_start=function(){
 	if(checking){
-    console.log("描写待ち");
+		console.log("描写待ち");
 		setTimeout(loop_start,loop_time);
 	}else{
-    console.log("描写開始");
+    		console.log("描写開始");
 		wait=false;
 		loop_timer=setInterval(loop,loop_time);
 	}
@@ -397,9 +401,7 @@ document.getElementById("ごはん").onclick=function() {
 		document.getElementById("キャラ").innerHTML="😋";
 		list["満腹"]=100;
 		delta["満腹"]=0;
-		checking=true;
 		check(false);
-		save();
 		setTimeout(loop_start,2000);
 	}
 }
@@ -411,9 +413,7 @@ document.getElementById("トイレ").onclick=function() {
 		document.getElementById("キャラ").innerHTML="🚻";
 		list["便意"]=0;
 		delta["便意"]=0;
-		checking=true;
 		check(false);
-		save();
 		setTimeout(loop_start,2000);
 	}
 }
@@ -425,9 +425,7 @@ document.getElementById("風呂").onclick=function() {
 		document.getElementById("キャラ").innerHTML="🛁";
 		list["身体"]=0;
 		delta["身体"]=0;
-		checking=true;
 		check(false);
-		save();
 		setTimeout(loop_start,2000);
 	}
 }
@@ -439,9 +437,7 @@ document.getElementById("掃除").onclick=function() {
 		document.getElementById("キャラ").innerHTML="😊";
 		list["部屋"]=0;
 		delta["部屋"]=0;
-		checking=true;
 		check(false);
-		save();
 		setTimeout(loop_start,2000);
 	}
 }
@@ -459,9 +455,7 @@ document.getElementById("注射").onclick=function() {
 			list["体力"]=0;
 			delta["体力"]=0;
 		}
-		checking=true;
 		check(false);
-		save();
 		setTimeout(loop_start,2000);
 	}
 }
@@ -471,9 +465,7 @@ document.getElementById("電気").onclick=function() {
 		wait=true;
 		clearInterval(loop_timer);
 		list["電気"]=!list["電気"];
-		checking=true;
 		check(false);
-		save();
 		setTimeout(loop_start,loop_time);
 	}
 }
