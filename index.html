@@ -134,8 +134,13 @@ function calc_delta(){
 	console.log("増減値を算出");
 	delta={"体力":0,"満腹":0,"便意":0,"眠気":0,"身体":0,"部屋":0,"薬":0};
 
-	if(list["病気"]){
-		delta["体力"]=delta["体力"]-30*speed;
+	if(list["状態"]!="死亡"){
+		if(list["病気"]){
+			delta["体力"]=delta["体力"]-30*speed;
+		}
+		if(delta["薬"]>0){
+			delta["薬"]=delta["薬"]-120*speed;
+		}
 	}
 	if(list["状態"]=="睡眠"){
 		delta["体力"]=delta["体力"]+10*speed;
@@ -164,45 +169,49 @@ function calc_delta(){
 				delta["体力"]=delta["体力"]-10*speed;
 			}
 		}else{
-			if(list["眠気"]<=50){
-				delta["体力"]=delta["体力"]-10*speed;
-			}
+			delta["体力"]=delta["体力"]-10*speed;
 		}
 	}
-	delta["薬"]=-120*speed;
 	console.log(delta);
 }
 
 function calc_next(){
 	calc_delta();
 	console.log("次の時間を算出");
-	var tmp_next=Date.now()+24*60*60*1000;
-	if(list["状態"]=="たまご"){tmp_next=list["誕生"]+1;}
-	if(delta["便意"]>0&&list["便意"]<100){tmp_next=Math.min(tmp_next,3600000*(100-list["便意"])/delta["便意"]+list["最終"]+1);}
-	if(delta["身体"]>0&&list["身体"]<100){tmp_next=Math.min(tmp_next,3600000*(100-list["身体"])/delta["身体"]+list["最終"]+1);}
-	if(delta["眠気"]>0&&list["眠気"]<100){tmp_next=Math.min(tmp_next,3600000*(100-list["眠気"])/delta["眠気"]+list["最終"]+1);}
-	if(delta["眠気"]<0&&list["眠気"]>0){tmp_next=Math.min(tmp_next,3600000*(0-list["眠気"])/delta["眠気"]+list["最終"]+1);}
-	if(delta["体力"]<0&&list["体力"]>0){tmp_next=Math.min(tmp_next,3600000*(0-list["体力"])/delta["体力"]+list["最終"]+1);}
-	if(delta["満腹"]<0&&list["満腹"]>0){tmp_next=Math.min(tmp_next,3600000*(0-list["満腹"])/delta["満腹"]+list["最終"]+1);}
-	if(delta["部屋"]>0){
-		if(list["部屋"]<50){
-			tmp_next=Math.min(tmp_next,3600000*(50-list["部屋"])/delta["部屋"]+list["最終"]+1);
-		}else if(list["部屋"]<75){
-			tmp_next=Math.min(tmp_next,3600000*(75-list["部屋"])/delta["部屋"]+list["最終"]+1);
-		}else if(list["部屋"]<100){
-			tmp_next=Math.min(tmp_next,3600000*(100-list["部屋"])/delta["部屋"]+list["最終"]+1);
+	next=Date.now()+24*60*60*1000;
+	if(list["状態"]=="たまご"){next=list["誕生"]+1;}
+	if(delta["便意"]>0&&list["便意"]<100){next=Math.min(next,3600000*(100-list["便意"])/delta["便意"]+list["最終"]+1);}
+	if(delta["身体"]>0&&list["身体"]<100){next=Math.min(next,3600000*(100-list["身体"])/delta["身体"]+list["最終"]+1);}
+	if(delta["眠気"]>0){
+		if(list["眠気"]<30){
+			next=Math.min(next,3600000*(30-list["眠気"])/delta["眠気"]+list["最終"]+1);
+		}else if(list["眠気"]<100){
+			next=Math.min(next,3600000*(100-list["眠気"])/delta["眠気"]+list["最終"]+1);
 		}
 	}
-	if(delta["薬"]<0&&list["薬"]>0){tmp_next=Math.min(tmp_next,3600000*(0-list["薬"])/delta["薬"]+list["最終"]+1);}
-	console.log(tmp_next);
-	return tmp_next;
+	if(delta["眠気"]<0&&list["眠気"]>0){next=Math.min(next,3600000*(0-list["眠気"])/delta["眠気"]+list["最終"]+1);}
+	if(delta["体力"]<0&&list["体力"]>0){next=Math.min(next,3600000*(0-list["体力"])/delta["体力"]+list["最終"]+1);}
+	if(delta["満腹"]<0&&list["満腹"]>0){next=Math.min(next,3600000*(0-list["満腹"])/delta["満腹"]+list["最終"]+1);}
+	if(delta["部屋"]>0){
+		if(list["部屋"]<50){
+			next=Math.min(next,3600000*(50-list["部屋"])/delta["部屋"]+list["最終"]+1);
+		}else if(list["部屋"]<75){
+			next=Math.min(next,3600000*(75-list["部屋"])/delta["部屋"]+list["最終"]+1);
+		}else if(list["部屋"]<100){
+			next=Math.min(next,3600000*(100-list["部屋"])/delta["部屋"]+list["最終"]+1);
+		}
+	}
+	if(delta["薬"]<0&&list["薬"]>0){next=Math.min(next,3600000*(0-list["薬"])/delta["薬"]+list["最終"]+1);}
+	console.log(next);
 }
 
-function check(time){
+function check(){
 	console.log("チェック");
 	checking=true;
 	var now=Date.now();
-	if(!time||time>now){
+	if(next<now){
+		time=next;
+	}else{
 		time=now;
 	}
 
@@ -223,12 +232,14 @@ function check(time){
 		diff[key[i]]=0;
 	}
 
-
 	if(list["状態"]=="たまご"&&time>=list["誕生"]){
 		list["状態"]="覚醒";
 	}
 
-	if(list["体力"]<=0||list["薬"]>190){
+	if(list["薬"]>190){
+		list["体力"]=0;
+	}
+	if(list["体力"]<=0){
 		list["状態"]="死亡";
 	}
 
@@ -246,7 +257,6 @@ function check(time){
 	if(list["身体"]>=100){
 		list["病気"]=true;
 	}
-	
 	if(list["薬"]>0){
 		list["病気"]=false;
 	}
@@ -261,19 +271,17 @@ function check(time){
 		}
 	}
 
-	var key=["体力","満腹","便意","眠気","身体","部屋","薬"];
 	for (var i=0;i<key.length;i++){
 		if(list[key[i]]<0){list[key[i]]=0;}else if(list[key[i]]>100){list[key[i]]=100;}
 	}
 	console.log(list);
 
-	var tmp_next=calc_next();
-	if(tmp_next<now){
+	calc_next();
+	if(next<now){
 		console.log("再チェック");
-		check(tmp_next);
+		check();
 	}else{
 		console.log("チェック完了");
-		next=tmp_next
 		checking=false;
 		save();
 	}
@@ -298,7 +306,8 @@ window.onload=function(){
 		list=JSON.parse(localStorage.getItem("list"));
 		console.log(list);
 		console.log("チェック開始");
-		check(calc_next());
+		calc_next();
+		check();
 	}else{
 		console.log("初期化");
 		list={
@@ -317,7 +326,7 @@ window.onload=function(){
 			"ゴミ":[],
 			"うんこ":[]
 		};
-		next=calc_next();
+		calc_next();
 		save();
 	}
 	setTimeout(loop_start,loop_time);
@@ -326,7 +335,7 @@ window.onload=function(){
 var loop=function(){
 	var now=Date.now();
 	if(!checking&&next<now){
-		check(next);
+		check();
 	}
 	var elapsed=(now-list["最終"])/3600000 ;
 
@@ -432,7 +441,7 @@ document.getElementById("ごはん").onclick=function() {
 		clearInterval(loop_timer);
 		document.getElementById("キャラ").innerHTML="😋";
 		diff={"体力":0,"満腹":100,"便意":0,"眠気":0,"身体":0,"部屋":0,"薬":0};
-		check(false);
+		check();
 		setTimeout(loop_start,2000);
 	}
 }
@@ -443,7 +452,7 @@ document.getElementById("トイレ").onclick=function() {
 		clearInterval(loop_timer);
 		document.getElementById("キャラ").innerHTML="🚻";
 		diff={"体力":0,"満腹":0,"便意":-100,"眠気":0,"身体":0,"部屋":0,"薬":0};
-		check(false);
+		check();
 		setTimeout(loop_start,2000);
 	}
 }
@@ -454,7 +463,7 @@ document.getElementById("風呂").onclick=function() {
 		clearInterval(loop_timer);
 		document.getElementById("キャラ").innerHTML="🛁";
 		diff={"体力":0,"満腹":0,"便意":0,"眠気":0,"身体":-100,"部屋":0,"薬":0};
-		check(false);
+		check();
 		setTimeout(loop_start,2000);
 	}
 }
@@ -471,7 +480,7 @@ document.getElementById("掃除").onclick=function() {
 
 		list["うんこ"]=[];
 		diff={"体力":0,"満腹":0,"便意":0,"眠気":0,"身体":0,"部屋":-100,"薬":0};
-		check(false);
+		check();
 		setTimeout(loop_start,2000);
 	}
 }
@@ -481,8 +490,13 @@ document.getElementById("注射").onclick=function() {
 		wait=true;
 		clearInterval(loop_timer);
 		document.getElementById("キャラ").innerHTML="😣";
+
+		var str = document.getElementById("ビュー").innerHTML;
+		str = str.replace(/💀/g,"✨");
+		document.getElementById("ビュー").innerHTML=str;
+
 		diff={"体力":0,"満腹":0,"便意":0,"眠気":0,"身体":0,"部屋":0,"薬":100};
-		check(false);
+		check();
 		setTimeout(loop_start,2000);
 	}
 }
@@ -492,7 +506,7 @@ document.getElementById("電気").onclick=function() {
 		wait=true;
 		clearInterval(loop_timer);
 		list["電気"]=!list["電気"];
-		check(false);
+		check();
 		setTimeout(loop_start,loop_time);
 	}
 }
