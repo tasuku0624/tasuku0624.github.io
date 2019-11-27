@@ -228,6 +228,7 @@ function check(){
 
 	var key=["体力","満腹","便意","眠気","身体","部屋","薬"];
 	for (var i=0;i<key.length;i++){
+		if(list[key[i]]<0){list[key[i]]=0;}else if(list[key[i]]>100){list[key[i]]=100;}
 		list[key[i]]=list[key[i]]+diff[key[i]];
 		diff[key[i]]=0;
 	}
